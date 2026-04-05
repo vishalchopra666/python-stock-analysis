@@ -224,21 +224,6 @@ if __name__ == "__main__":
 
 ---
 
-# ▶️ Usage
-
-```python
-model = TopNPortfolio(
-    stocks,
-    expected_returns,
-    n_select=5   # 🔥 choose 5 or 10
-)
-
-result = model.run(50000)
-print(result)
-```
-
----
-
 # 🧠 Key Parameters
 
 | Parameter    | Meaning                    |

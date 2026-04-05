@@ -186,7 +186,7 @@ class MinRiskPortfolio:
 
         best = self.get_best()
 
-        print("\n===== MIN RISK (WITH RETURN FILTER) =====")
+        print("\n===== Minimum Risk with Return Constraint =====")
         print(f"Return: {best[0]:.2%}")
         print(f"Volatility: {best[1]:.2%}")
 

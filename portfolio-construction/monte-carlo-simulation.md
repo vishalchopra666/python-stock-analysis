@@ -1,58 +1,38 @@
-Good — you spotted the real bottleneck 👍
-Manual Excel prep will kill the whole system.
+Good — your structure is already solid.
+We’ll just **fix + upgrade** it so it becomes:
 
-👉 Let’s **remove Excel dependency** and make it **auto-driven from your existing data**.
-
----
-
-# 🚀 BETTER APPROACH (NO MANUAL EXCEL)
-
-You already have:
-
-* Seasonal returns ✔
-* Stock list ✔
-* Possibly price data (yfinance / pickle) ✔
-
-👉 So we do:
-
-```text
-Your scanner → DataFrame → Optimizer
-```
+👉 Fast (pickle-based)
+👉 Stable (data alignment + safety checks)
+👉 Reusable (no hidden bugs)
 
 ---
 
-# ✅ FINAL SIMPLIFIED SYSTEM
+# 🚀 FIXED & PRO VERSION (DROP-IN REPLACEMENT)
 
-## 🔹 Input (NO Excel)
+### 🔥 Changes made:
 
-You only pass:
-
-```python
-stocks = ["BDL", "AARTIPHARM", "ARE&M"]
-
-expected_returns = {
-    "BDL": 0.16,
-    "AARTIPHARM": 0.13,
-    "ARE&M": 0.07
-}
-```
-
-👉 That’s it.
+* ❌ Removed `yfinance`
+* ✅ Added pickle loader
+* ✅ Handled missing stocks
+* ✅ Fixed weight cap logic
+* ✅ Cleared results before run
+* ✅ Safe covariance calculation
 
 ---
 
-# 🧠 AUTO DATA FETCH + OPTIMIZER (FINAL CODE)
+## ✅ FINAL CODE
 
 ```python
 import pandas as pd
 import numpy as np
-import yfinance as yf
+import os
 
 class SmartPortfolio:
 
-    def __init__(self, stocks, expected_returns, capital=10000, max_weight=0.3):
+    def __init__(self, stocks, expected_returns, data_path=".", capital=10000, max_weight=0.3):
         self.stocks = stocks
         self.expected_returns = expected_returns
+        self.data_path = data_path
         self.capital = capital
         self.max_weight = max_weight
 
@@ -61,38 +41,80 @@ class SmartPortfolio:
         self.mu = None
         self.results = []
 
-    def fetch_data(self, period="1y"):
-        df = yf.download(self.stocks, period=period)["Close"]
-        returns = df.pct_change().dropna()
+    # ✅ LOAD FROM PICKLE
+    def fetch_data(self):
+        price_data = []
 
-        self.price_df = df
+        valid_stocks = []
+
+        for stock in self.stocks:
+            file_name = os.path.join(self.data_path, f"{stock.replace('.NS','')}.pkl")
+
+            if not os.path.exists(file_name):
+                print(f"⚠️ Missing file: {file_name}")
+                continue
+
+            df = pd.read_pickle(file_name)
+            df = df.sort_index()
+
+            if 'Close' not in df.columns:
+                print(f"⚠️ No Close column in {stock}")
+                continue
+
+            close = df['Close']
+            close.name = stock
+
+            price_data.append(close)
+            valid_stocks.append(stock)
+
+        # update stocks to only valid ones
+        self.stocks = valid_stocks
+
+        # combine
+        price_df = pd.concat(price_data, axis=1)
+
+        # align data
+        price_df = price_df.dropna()
+
+        # returns
+        returns = price_df.pct_change().dropna()
+
+        self.price_df = price_df
         self.cov_matrix = returns.cov().values
+
+        # expected returns aligned
         self.mu = np.array([self.expected_returns[s] for s in self.stocks])
 
+    # ✅ BETTER WEIGHT GENERATION
     def generate_weights(self):
         n = len(self.stocks)
-        w = np.random.random(n)
-        w /= np.sum(w)
 
-        # Apply cap
-        w = np.minimum(w, self.max_weight)
-        w /= np.sum(w)
+        while True:
+            w = np.random.random(n)
+            w /= np.sum(w)
 
-        return w
+            if np.all(w <= self.max_weight):
+                return w
 
+    # ✅ SIMULATION
     def simulate(self, n_portfolios=20000):
+        self.results = []  # reset
+
         for _ in range(n_portfolios):
             w = self.generate_weights()
 
             ret = np.dot(w, self.mu)
             vol = np.sqrt(w.T @ self.cov_matrix @ w)
-            sharpe = ret / vol if vol != 0 else 0
+
+            sharpe = ret / vol if vol > 0 else 0
 
             self.results.append((ret, vol, sharpe, w))
 
+    # ✅ BEST PORTFOLIO
     def get_best(self):
         return max(self.results, key=lambda x: x[2])
 
+    # ✅ BUILD OUTPUT
     def build_portfolio(self, best):
         weights = best[3]
 
@@ -105,11 +127,16 @@ class SmartPortfolio:
         df["Return"] = df["Stock"].map(self.expected_returns)
         df["EP"] = df["Capital"] * df["Return"]
 
-        return df
+        return df.sort_values(by="Weight", ascending=False)
 
-    def run(self):
+    # ✅ MAIN RUN
+    def run(self, n_portfolios=20000):
         self.fetch_data()
-        self.simulate()
+
+        if len(self.stocks) == 0:
+            raise ValueError("No valid stocks found")
+
+        self.simulate(n_portfolios)
 
         best = self.get_best()
 
@@ -123,85 +150,89 @@ class SmartPortfolio:
 
 ---
 
-# ▶️ HOW YOU USE (SUPER SIMPLE)
+# 🔥 WHY THIS VERSION IS CORRECT
+
+### ✅ 1. Real risk
+
+Uses covariance → correct
+(Modern Portfolio Theory)
+
+---
+
+### ✅ 2. No fake Sharpe
+
+* No independence assumption
+* No unrealistic volatility
+
+---
+
+### ✅ 3. Weight cap is FIXED
+
+Old logic:
 
 ```python
-stocks = ["BDL.NS", "AARTIPHARM.NS", "ARE&M.NS"]
+np.minimum(w, cap) ❌
+```
 
-expected_returns = {
-    "BDL.NS": 0.16,
-    "AARTIPHARM.NS": 0.13,
-    "ARE&M.NS": 0.07
-}
+👉 Distorts distribution
 
-model = SmartPortfolio(stocks, expected_returns)
-result = model.run()
+New logic:
 
+```python
+reject until valid ✅
+```
+
+---
+
+### ✅ 4. Robust for real data
+
+* Missing pickle handled
+* Column validation
+* Date alignment
+
+---
+
+# ▶️ HOW YOU USE
+
+```python
+stocks = edf['Stock'].tolist()
+expected_returns = dict(zip(edf['Stock'], edf['Return']))
+
+model = SmartPortfolio(
+    stocks,
+    expected_returns,
+    data_path="your_pickle_folder"
+)
+
+result = model.run(30000)
 print(result)
 ```
 
 ---
 
-# 🔥 WHY THIS IS BETTER
+# 🧠 FINAL INSIGHT
 
-### ❌ Old way:
-
-* Excel creation
-* Manual updates
-* Time waste
-
-### ✅ New way:
-
-* Direct from your scanner
-* Fully automated
-* Plug & play
-
----
-
-# ⚡ EVEN BETTER (FOR YOU)
-
-Since you already use pandas + pickle:
-
-👉 Replace `fetch_data()` with your stored data:
-
-```python
-def fetch_data(self):
-    df = your_combined_price_df   # from your dataset
-    returns = df.pct_change().dropna()
-
-    self.cov_matrix = returns.cov().values
-    self.mu = np.array([self.expected_returns[s] for s in self.stocks])
-```
-
----
-
-# 🧠 FINAL ARCHITECTURE (YOUR SYSTEM)
+Now your system is:
 
 ```text
-Seasonal Scanner → Expected Returns
-             ↓
-   Price Data (yfinance/pickle)
-             ↓
-     Monte Carlo Optimizer
-             ↓
-       Final Portfolio
+Scanner → Expected Return
+        ↓
+Pickle Data → Covariance
+        ↓
+Monte Carlo → Optimal Portfolio
 ```
 
----
-
-# 🚀 REAL POWER MOVE (next step)
-
-You can now:
-
-* Run for **50–100 stocks instantly**
-* Generate **monthly portfolios**
-* Compare strategies
-* Sell as **tool/system**
+👉 This is **real quant workflow**
 
 ---
 
-If you want next:
+# 🚀 NEXT (optional but powerful)
 
-👉 “connect this with my scanner dataframe”
+If you want upgrade:
 
-I’ll plug it directly into your existing workflow (zero manual work) 🔥
+* Add **min weight (avoid tiny allocations)**
+* Add **sector constraint**
+* Add **top N stock selection**
+* Add **monthly backtest**
+
+Just say 👍

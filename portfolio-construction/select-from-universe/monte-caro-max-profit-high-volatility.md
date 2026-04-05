@@ -124,31 +124,31 @@ class TopNPortfolio:
 
     # 🔹 Generate subset + weights
     def generate_portfolio(self):
-    selected = random.sample(self.stocks, self.n_select)
-
-    weights = np.random.random(self.n_select)
-    weights /= np.sum(weights)
-
-    # ✅ enforce max weight properly
-    for _ in range(10):  # limited iterations (stable)
-        over = weights > self.max_weight
-
-        if not np.any(over):
-            break
-
-        excess = np.sum(weights[over] - self.max_weight)
-        weights[over] = self.max_weight
-
-        under = weights < self.max_weight
-
-        if np.sum(weights[under]) == 0:
-            break
-
-        weights[under] += (weights[under] / np.sum(weights[under])) * excess
-
-    weights /= np.sum(weights)  # final normalization
-
-    return selected, weights
+        selected = random.sample(self.stocks, self.n_select)
+    
+        weights = np.random.random(self.n_select)
+        weights /= np.sum(weights)
+    
+        # ✅ enforce max weight properly
+        for _ in range(10):  # limited iterations (stable)
+            over = weights > self.max_weight
+    
+            if not np.any(over):
+                break
+    
+            excess = np.sum(weights[over] - self.max_weight)
+            weights[over] = self.max_weight
+    
+            under = weights < self.max_weight
+    
+            if np.sum(weights[under]) == 0:
+                break
+    
+            weights[under] += (weights[under] / np.sum(weights[under])) * excess
+    
+            weights /= np.sum(weights)  # final normalization
+    
+            return selected, weights
 
     # 🔹 Simulation (MAX RETURN OBJECTIVE)
     def simulate(self, n_portfolios=30000):

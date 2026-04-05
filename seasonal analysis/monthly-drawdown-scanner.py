@@ -66,4 +66,8 @@ def monthly_drawdown_scanner(data_folder):
         except Exception as e:
             print(f"{file} → {e}")
 
-    return pd.DataFrame(results)
+    return pd.DataFrame(results
+
+if __name__ == "__main__":
+    drawdown_df = monthly_drawdown_scanner("data/raw")    
+    drawdown_df.to_csv("drawdown.csv", index=False)

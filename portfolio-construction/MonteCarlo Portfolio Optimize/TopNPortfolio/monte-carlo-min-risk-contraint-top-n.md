@@ -50,15 +50,6 @@ From Modern Portfolio Theory
 # 📁 Inputs
 
 ```python
-stocks = edf['Stock'].tolist()
-expected_returns = dict(zip(edf['Stock'], edf['Return']))
-```
-
----
-
-# 🔥 FULL IMPLEMENTATION
-
-```python
 import pandas as pd
 import numpy as np
 import os
@@ -126,15 +117,38 @@ class TopNMinRiskPortfolio:
 
         self.stock_index = {s: i for i, s in enumerate(self.stocks)}
 
-    # 🔹 Generate subset + weights
+        # ✅ min weight validation
+        if self.min_weight * self.n_select > 1:
+            raise ValueError("min_weight too high for given n_select ❌")
+
+    # 🔹 Generate subset + weights (FIXED)
     def generate_portfolio(self):
         selected = random.sample(self.stocks, self.n_select)
 
         weights = np.random.random(self.n_select)
         weights /= np.sum(weights)
 
-        if not (np.all(weights <= self.max_weight) and np.all(weights >= self.min_weight)):
-            return None, None
+        # 🔹 enforce min weight
+        weights = np.maximum(weights, self.min_weight)
+        weights /= np.sum(weights)
+
+        # 🔹 enforce max weight
+        for _ in range(10):
+            over = weights > self.max_weight
+            if not np.any(over):
+                break
+
+            excess = np.sum(weights[over] - self.max_weight)
+            weights[over] = self.max_weight
+
+            under = weights < self.max_weight
+            if np.sum(weights[under]) == 0:
+                break
+
+            weights[under] += (weights[under] / np.sum(weights[under])) * excess
+
+        # 🔹 final normalize
+        weights /= np.sum(weights)
 
         return selected, weights
 
@@ -149,9 +163,6 @@ class TopNMinRiskPortfolio:
 
         for _ in range(n_portfolios):
             selected, weights = self.generate_portfolio()
-
-            if selected is None:
-                continue
 
             returns = np.array([self.expected_returns[s] for s in selected])
             port_return = np.dot(weights, returns)
@@ -204,8 +215,6 @@ class TopNMinRiskPortfolio:
         print(f"Volatility: {best[1]:.2%}")
 
         return self.build_portfolio(best)
-```
-
 ---
 
 # ▶️ Usage

@@ -91,10 +91,9 @@ Where:
 
 Below is the complete working code:
 
-```python
 # Top-N Seasonal Portfolio (Risk-Adjusted Monte Carlo)
 # Drawdown Measurement
-# Max Weight 
+# Max Weight + Min Weight
 
 
 import pandas as pd
@@ -111,6 +110,7 @@ class TopNPortfolio:
         capital=10000,
         n_select=5,
         max_weight=0.4,
+        min_weight=0.05,   # 🔥 NEW
         dd_penalty=0.5
     ):
         self.stocks = stocks
@@ -119,6 +119,7 @@ class TopNPortfolio:
         self.capital = capital
         self.n_select = n_select
         self.max_weight = max_weight
+        self.min_weight = min_weight
         self.dd_penalty = dd_penalty
 
         self.results = []
@@ -128,22 +129,30 @@ class TopNPortfolio:
         self.mu_map = self.expected_returns
         self.dd_map = self.drawdowns
 
-        # ✅ sanity check (VERY IMPORTANT)
+        # ✅ sanity check
         for s in self.stocks:
             if self.mu_map[s] < 0:
                 raise ValueError(f"Return is negative for {s} ❌")
             if self.dd_map[s] > 0:
                 raise ValueError(f"Drawdown should be negative for {s} ❌")
 
-    # 🔹 Generate subset + weights (FIXED + STABLE)
+        # ✅ min weight feasibility check
+        if self.min_weight * self.n_select > 1:
+            raise ValueError("min_weight too high for given n_select ❌")
+
+    # 🔹 Generate subset + weights
     def generate_portfolio(self):
         selected = random.sample(self.stocks, self.n_select)
 
         weights = np.random.random(self.n_select)
         weights /= np.sum(weights)
 
-        # ✅ enforce cap properly
-        for _ in range(10):  # limited iterations (stable)
+        # 🔹 enforce min weight
+        weights = np.maximum(weights, self.min_weight)
+        weights /= np.sum(weights)
+
+        # 🔹 enforce max weight
+        for _ in range(10):
             over = weights > self.max_weight
             if not np.any(over):
                 break
@@ -157,7 +166,8 @@ class TopNPortfolio:
 
             weights[under] += (weights[under] / np.sum(weights[under])) * excess
 
-        weights /= np.sum(weights)  # final normalize
+        # 🔹 final normalize
+        weights /= np.sum(weights)
 
         return selected, weights
 
@@ -183,7 +193,7 @@ class TopNPortfolio:
     def get_best(self):
         return max(self.results, key=lambda x: x[0])
 
-    # 🔹 Build output (FIXED NAMES)
+    # 🔹 Build output
     def build_portfolio(self, best):
         _, port_return, port_dd, selected, weights = best
 
@@ -193,18 +203,14 @@ class TopNPortfolio:
         })
 
         df["Capital"] = df["Weight"] * self.capital
-
-        # ✅ clear naming (no confusion)
         df["Exp_Return"] = df["Stock"].map(self.expected_returns)
         df["Drawdown"] = df["Stock"].map(self.drawdowns)
-
         df["EP"] = df["Capital"] * df["Exp_Return"]
 
         print("\n===== RISK-ADJUSTED (TOP-N) =====")
         print(f"Return: {port_return:.2%}")
         print(f"Drawdown: {-port_dd:.2%}")
 
-        # ✅ debug print (optional but useful)
         print("\nDEBUG CHECK:")
         for s in selected:
             print(s, "| Return:", self.expected_returns[s],
@@ -221,7 +227,6 @@ class TopNPortfolio:
 
 
 if __name__ == "__main__":
-    import pandas as pd
     edf = pd.read_excel("monte.xlsx")
     
     stocks = edf['Stock'].tolist()
@@ -229,16 +234,17 @@ if __name__ == "__main__":
     drawdown = dict(zip(edf['Stock'], edf['drawdown']))
 
     model = TopNPortfolio(
-      stocks,
-      expected_returns,
-      drawdown,
-      max_weight=0.3,
-      n_select=5   # 🔥 choose 5 or 10
+        stocks,
+        expected_returns,
+        drawdown,
+        capital=12000,
+        max_weight=0.30,
+        min_weight=0.05,   # 🔥 NEW PARAM
+        n_select=5
     )
 
-    result = model.run(50000)
+    result = model.run(40000)
     print(result)
-```
 
 ---
 

@@ -1,3 +1,6 @@
+# The below method can be used to create portfolio in Excel
+
+
 Perfect — that’s a **very solid filter** 👍
 Sharpe **2–3 = high quality + still realistic**
 

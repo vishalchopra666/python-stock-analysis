@@ -1,232 +1,207 @@
-Perfect. Let’s build this **once and forever usable** — clean, realistic, extendable.
+Good — you spotted the real bottleneck 👍
+Manual Excel prep will kill the whole system.
 
-👉 Goal:
-**Excel → Monte Carlo → Covariance → Constraints → Output (Excel)**
-No shortcuts. No fake Sharpe.
-
----
-
-# 🚀 FINAL EVERGREEN PORTFOLIO ENGINE
-
-This version includes:
-
-* ✔ Real covariance (correlation)
-* ✔ Monte Carlo simulation
-* ✔ Weight constraints
-* ✔ Clean OOP design
-* ✔ Excel input + output
-* ✔ Reusable for any strategy (seasonal, momentum, etc.)
+👉 Let’s **remove Excel dependency** and make it **auto-driven from your existing data**.
 
 ---
 
-# 📁 1. Excel Structure (FINAL)
+# 🚀 BETTER APPROACH (NO MANUAL EXCEL)
 
-### File: `portfolio_input.xlsx`
+You already have:
 
-### Sheet 1: `returns`
+* Seasonal returns ✔
+* Stock list ✔
+* Possibly price data (yfinance / pickle) ✔
 
-| Date       | BDL | AARTIPHARM | ARE&M | ... |
-| ---------- | --- | ---------- | ----- | --- |
-| 2024-01-01 | ... | ...        | ...   | ... |
+👉 So we do:
 
-👉 Use **daily prices or returns**
-
----
-
-### Sheet 2: `expected`
-
-| Stock      | ExpectedReturn |
-| ---------- | -------------- |
-| BDL        | 0.16           |
-| AARTIPHARM | 0.13           |
-
-👉 Your seasonal edge goes here
-
----
-
-# 🧠 2. FINAL OOP CLASS
-
-```python
-import pandas as pd
-import numpy as np
-
-class MonteCarloPortfolio:
-
-    def __init__(self, file_path, capital=10000, max_weight=0.3):
-        self.file_path = file_path
-        self.capital = capital
-        self.max_weight = max_weight
-        
-        self.returns_df = None
-        self.mu = None
-        self.cov_matrix = None
-        self.stocks = None
-        self.results = []
-
-    def load_data(self):
-        # Load returns (price-based)
-        price_df = pd.read_excel(self.file_path, sheet_name="returns", index_col=0)
-        returns = price_df.pct_change().dropna()
-
-        self.cov_matrix = returns.cov().values
-        self.stocks = returns.columns.tolist()
-
-        # Load expected returns (your edge)
-        exp_df = pd.read_excel(self.file_path, sheet_name="expected")
-        self.mu = exp_df.set_index("Stock").loc[self.stocks]["ExpectedReturn"].values
-
-    def generate_weights(self, n):
-        weights = np.random.random(n)
-        weights /= np.sum(weights)
-
-        # Apply max cap
-        weights = np.minimum(weights, self.max_weight)
-        weights /= np.sum(weights)
-
-        return weights
-
-    def simulate(self, num_portfolios=20000):
-        n = len(self.mu)
-
-        for _ in range(num_portfolios):
-            weights = self.generate_weights(n)
-
-            port_return = np.dot(weights, self.mu)
-            port_vol = np.sqrt(weights.T @ self.cov_matrix @ weights)
-            sharpe = port_return / port_vol if port_vol != 0 else 0
-
-            self.results.append({
-                "return": port_return,
-                "volatility": port_vol,
-                "sharpe": sharpe,
-                "weights": weights
-            })
-
-    def get_best(self):
-        return max(self.results, key=lambda x: x["sharpe"])
-
-    def build_output(self, best):
-        df = pd.DataFrame({
-            "Stock": self.stocks,
-            "Weight": best["weights"]
-        })
-
-        df["Capital"] = df["Weight"] * self.capital
-
-        # Map expected returns
-        exp_df = pd.read_excel(self.file_path, sheet_name="expected")
-        exp_map = dict(zip(exp_df["Stock"], exp_df["ExpectedReturn"]))
-
-        df["Return"] = df["Stock"].map(exp_map)
-        df["EP"] = df["Capital"] * df["Return"]
-
-        return df
-
-    def save_to_excel(self, df, filename="portfolio_output.xlsx"):
-        df.to_excel(filename, index=False)
-
-    def run(self, num_portfolios=20000, save=True):
-        self.load_data()
-        self.simulate(num_portfolios)
-        best = self.get_best()
-
-        print("\n===== BEST PORTFOLIO =====")
-        print(f"Return: {best['return']:.2%}")
-        print(f"Volatility: {best['volatility']:.2%}")
-        print(f"Sharpe: {best['sharpe']:.2f}")
-
-        output_df = self.build_output(best)
-
-        if save:
-            self.save_to_excel(output_df)
-
-        return output_df
+```text
+Your scanner → DataFrame → Optimizer
 ```
 
 ---
 
-# ▶️ 3. HOW TO USE
+# ✅ FINAL SIMPLIFIED SYSTEM
+
+## 🔹 Input (NO Excel)
+
+You only pass:
 
 ```python
-optimizer = MonteCarloPortfolio(
-    file_path="portfolio_input.xlsx",
-    capital=10000,
-    max_weight=0.30
-)
+stocks = ["BDL", "AARTIPHARM", "ARE&M"]
 
-result = optimizer.run(num_portfolios=30000)
+expected_returns = {
+    "BDL": 0.16,
+    "AARTIPHARM": 0.13,
+    "ARE&M": 0.07
+}
+```
+
+👉 That’s it.
+
+---
+
+# 🧠 AUTO DATA FETCH + OPTIMIZER (FINAL CODE)
+
+```python
+import pandas as pd
+import numpy as np
+import yfinance as yf
+
+class SmartPortfolio:
+
+    def __init__(self, stocks, expected_returns, capital=10000, max_weight=0.3):
+        self.stocks = stocks
+        self.expected_returns = expected_returns
+        self.capital = capital
+        self.max_weight = max_weight
+
+        self.price_df = None
+        self.cov_matrix = None
+        self.mu = None
+        self.results = []
+
+    def fetch_data(self, period="1y"):
+        df = yf.download(self.stocks, period=period)["Close"]
+        returns = df.pct_change().dropna()
+
+        self.price_df = df
+        self.cov_matrix = returns.cov().values
+        self.mu = np.array([self.expected_returns[s] for s in self.stocks])
+
+    def generate_weights(self):
+        n = len(self.stocks)
+        w = np.random.random(n)
+        w /= np.sum(w)
+
+        # Apply cap
+        w = np.minimum(w, self.max_weight)
+        w /= np.sum(w)
+
+        return w
+
+    def simulate(self, n_portfolios=20000):
+        for _ in range(n_portfolios):
+            w = self.generate_weights()
+
+            ret = np.dot(w, self.mu)
+            vol = np.sqrt(w.T @ self.cov_matrix @ w)
+            sharpe = ret / vol if vol != 0 else 0
+
+            self.results.append((ret, vol, sharpe, w))
+
+    def get_best(self):
+        return max(self.results, key=lambda x: x[2])
+
+    def build_portfolio(self, best):
+        weights = best[3]
+
+        df = pd.DataFrame({
+            "Stock": self.stocks,
+            "Weight": weights
+        })
+
+        df["Capital"] = df["Weight"] * self.capital
+        df["Return"] = df["Stock"].map(self.expected_returns)
+        df["EP"] = df["Capital"] * df["Return"]
+
+        return df
+
+    def run(self):
+        self.fetch_data()
+        self.simulate()
+
+        best = self.get_best()
+
+        print("\n===== BEST PORTFOLIO =====")
+        print(f"Return: {best[0]:.2%}")
+        print(f"Volatility: {best[1]:.2%}")
+        print(f"Sharpe: {best[2]:.2f}")
+
+        return self.build_portfolio(best)
+```
+
+---
+
+# ▶️ HOW YOU USE (SUPER SIMPLE)
+
+```python
+stocks = ["BDL.NS", "AARTIPHARM.NS", "ARE&M.NS"]
+
+expected_returns = {
+    "BDL.NS": 0.16,
+    "AARTIPHARM.NS": 0.13,
+    "ARE&M.NS": 0.07
+}
+
+model = SmartPortfolio(stocks, expected_returns)
+result = model.run()
 
 print(result)
 ```
 
 ---
 
-# 🔥 4. WHAT MAKES THIS “EVERGREEN”
+# 🔥 WHY THIS IS BETTER
 
-### ✔ Realistic
+### ❌ Old way:
 
-* Uses covariance (not fake independence)
+* Excel creation
+* Manual updates
+* Time waste
 
-### ✔ Flexible
+### ✅ New way:
 
-* You control expected returns (seasonal, momentum, etc.)
-
-### ✔ Scalable
-
-* Works for 5 stocks → 500 stocks
-
-### ✔ Safe
-
-* Weight cap avoids concentration risk
+* Direct from your scanner
+* Fully automated
+* Plug & play
 
 ---
 
-# 🧠 5. INTERPRETING OUTPUT
+# ⚡ EVEN BETTER (FOR YOU)
 
-Healthy output:
+Since you already use pandas + pickle:
 
-* Sharpe: **1 – 3**
-* Volatility: realistic (10–25% annualized approx)
-* Diversified weights
+👉 Replace `fetch_data()` with your stored data:
 
----
+```python
+def fetch_data(self):
+    df = your_combined_price_df   # from your dataset
+    returns = df.pct_change().dropna()
 
-# ⚠️ 6. COMMON MISTAKES (avoid forever)
-
-❌ Using only SD (no covariance)
-❌ Sharpe > 5 (fake model)
-❌ No weight cap
-❌ Using raw returns without validation
-
----
-
-# 🚀 7. NEXT LEVEL UPGRADES (future)
-
-You can extend this into:
-
-* Risk parity model
-* Minimum variance portfolio
-* Black–Litterman model
-* Sector constraints
-* Monthly rebalancing engine
-
----
-
-# 🏁 FINAL SUMMARY
-
-👉 You now have:
-
-```text
-Excel → Expected Returns → Covariance → Monte Carlo → Optimal Portfolio
+    self.cov_matrix = returns.cov().values
+    self.mu = np.array([self.expected_returns[s] for s in self.stocks])
 ```
 
-👉 This is **real quant workflow**, not retail tricks
+---
+
+# 🧠 FINAL ARCHITECTURE (YOUR SYSTEM)
+
+```text
+Seasonal Scanner → Expected Returns
+             ↓
+   Price Data (yfinance/pickle)
+             ↓
+     Monte Carlo Optimizer
+             ↓
+       Final Portfolio
+```
 
 ---
 
-If you want next step, I can help you build:
+# 🚀 REAL POWER MOVE (next step)
 
-* Auto **seasonal scanner → optimizer integration**
-* Or **backtest engine (this is where money is proven)**
+You can now:
 
-Just tell 👍
+* Run for **50–100 stocks instantly**
+* Generate **monthly portfolios**
+* Compare strategies
+* Sell as **tool/system**
+
+---
+
+If you want next:
+
+👉 “connect this with my scanner dataframe”
+
+I’ll plug it directly into your existing workflow (zero manual work) 🔥

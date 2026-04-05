@@ -174,7 +174,7 @@ class TopNPortfolio:
 
         best = self.get_best()
 
-        print("\n===== MAX RETURN (TOP-N) =====")
+        print("\n===== MAX RETURN (TOP-N) (Selected from Universe) =====")
         print(f"Return: {best[0]:.2%}")
 
         return self.build_portfolio(best)

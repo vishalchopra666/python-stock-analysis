@@ -201,7 +201,7 @@ class SmartPortfolio:
 
         best = self.get_best()
 
-        print("\n===== BEST PORTFOLIO =====")
+        print("\n===== BEST PORTFOLIO - Max Profit High Risk =====")
         print(f"Return: {best[0]:.2%}")
         print(f"Volatility: {best[1]:.2%}")
         print(f"Sharpe: {best[2]:.2f}")

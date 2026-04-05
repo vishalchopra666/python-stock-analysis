@@ -74,3 +74,8 @@ def win_rate_scanner(data_folder):
             print(f"{file} → {e}")
 
     return pd.DataFrame(results)
+
+
+if __name__ == "__main__":
+    win_df = win_rate_scanner("data/raw")    
+    win_df.to_csv("win_rate.csv", index=False)

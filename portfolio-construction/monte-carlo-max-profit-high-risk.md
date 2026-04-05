@@ -1,3 +1,7 @@
+# Monte Carlo: - Max Profit High Risk
+--------------------------------------
+
+
 Got it. Here’s a **clean, complete, evergreen article** you can directly save to your GitHub repo.
 
 ---

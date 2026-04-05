@@ -1,120 +1,89 @@
-Good idea — this will save you a lot of confusion later 👍
-
-Here’s a **clear, practical comparison table** of your 4 Monte Carlo models.
-
----
-
-# 📊 Monte Carlo Portfolio Models Comparison
-
-| Model                              | Objective                            | Risk Level | Return Level | Uses Covariance | Stock Count | When to Use          | Behavior             |
-| ---------------------------------- | ------------------------------------ | ---------- | ------------ | --------------- | ----------- | -------------------- | -------------------- |
-| **Max Sharpe**                     | Maximize return per risk             | Medium     | Medium–High  | ✅ Yes           | All stocks  | Default / unsure     | Balanced portfolio   |
-| **Min Risk**                       | Minimize volatility                  | Low        | Low–Medium   | ✅ Yes           | All stocks  | Capital protection   | Defensive            |
-| **Top-N Max Return**               | Maximize return only                 | Very High  | Very High    | ❌ No (optional) | 5–10        | Aggressive bets      | Concentrated winners |
-| **Top-N Min Risk + Return Filter** | Minimize risk with return constraint | Medium     | Medium–High  | ✅ Yes           | 5–10        | Best practical use ✅ | Smart aggressive     |
+Perfect — you’re right 👍
+Let’s fix and give you a **clean, accurate, evergreen comparison table** based on your final 4 models.
 
 ---
 
-# 🧠 Quick Decision Guide
+# 📊 FINAL MONTE CARLO COMPARISON (UPDATED)
 
-### If you are confused, use this:
+| Model                                  | Objective                              | Risk Level    | Return Level   | Uses Covariance | Stock Count | Core Logic                      | When to Use                       | Behavior               |
+| -------------------------------------- | -------------------------------------- | ------------- | -------------- | --------------- | ----------- | ------------------------------- | --------------------------------- | ---------------------- |
+| **Max Profit High Risk**               | Maximize return only                   | 🔴 Very High  | 🔥 Very High   | ❌ No (optional) | All stocks  | Ignore risk, chase return       | When you want aggressive bets     | Concentrated, unstable |
+| **Min Risk + Return Constraint**       | Minimize risk with return filter       | 🟢 Low–Medium | 🟡 Medium–High | ✅ Yes           | All stocks  | Return ≥ target → minimize risk | Capital + growth balance          | Stable, diversified    |
+| **Top-N Max Profit High Risk**         | Select best N, maximize return         | 🔴 Very High  | 🔥 Very High   | ❌ No (optional) | 5–10 stocks | Pick few winners only           | Small capital aggressive strategy | Highly concentrated    |
+| **Top-N Min Risk + Return Constraint** | Select N, filter return, minimize risk | 🟡 Medium     | 🟡 Medium–High | ✅ Yes           | 5–10 stocks | Pick few + control risk         | Best practical strategy ✅         | Smart aggressive       |
 
-```text
-Safe → Min Risk
-Balanced → Max Sharpe
-Aggressive → Top-N Max Return
-Practical Best → Top-N Min Risk + Return Filter
+---
+
+# 🧠 Key Differences (simple)
+
+### 🔹 1. Full Universe vs Top-N
+
+* **All stocks** → more diversification
+* **Top-N** → more focus, more impact
+
+---
+
+### 🔹 2. Risk Handling
+
+| Model Type                  | Risk Handling |
+| --------------------------- | ------------- |
+| Max Profit                  | ❌ Ignored     |
+| Min Risk + Constraint       | ✅ Controlled  |
+| Top-N Max Profit            | ❌ Ignored     |
+| Top-N Min Risk + Constraint | ✅ Controlled  |
+
+---
+
+# 🎯 Decision Guide (very practical)
+
+```text id="k7yd1n"
+If you want safety → Min Risk + Constraint
+If you want balance → same (default)
+If you want aggression → Top-N Max Profit
+If you want smart aggression → Top-N Min Risk + Constraint
 ```
 
 ---
 
-# 🔥 Deeper Understanding
+# 🔥 Best Strategy for YOU (based on your system)
 
-### 🔹 Max Sharpe
+Since you use **seasonal stocks**:
 
-* Finds best **efficiency**
-* Good for most situations
-* Not too risky, not too safe
+👉 Primary model:
 
----
+```text id="0bhhl3"
+Top-N Min Risk + Return Constraint ✅
+```
 
-### 🔹 Min Risk
+👉 Secondary:
 
-* Focus = stability
-* May sacrifice returns
-* Useful in bad markets
-
----
-
-### 🔹 Top-N Max Return
-
-* Ignores risk
-* Finds “multi-bagger combos”
-* Can blow up if wrong
-
----
-
-### 🔹 Top-N Min Risk + Return Filter
-
-* Combines:
-
-  * Selection (Top-N)
-  * Profit filter
-  * Risk control
-
-👉 This is closest to **real portfolio management**
-
----
-
-# ⚖️ Trade-off Summary
-
-| Model                   | Risk Control | Return Control |
-| ----------------------- | ------------ | -------------- |
-| Max Sharpe              | Medium       | Medium         |
-| Min Risk                | High         | Low            |
-| Top-N Max Return        | None         | High           |
-| Top-N Min Risk + Filter | High         | High           |
-
----
-
-# 🧠 Memory Trick
-
-```text
-Sharpe = Balance  
-Min Risk = Safety  
-Top-N = Focus  
-Top-N + Filter = Smart Focus
+```text id="p3g37b"
+Max Profit High Risk (small allocation)
 ```
 
 ---
 
-# 🏁 Final Recommendation (your case)
+# 🧠 Memory Trick (very useful)
 
-Since you are using **seasonal strategy**:
+```text id="st3n0p"
+All stocks = stability  
+Top-N = focus  
 
-👉 Use mostly:
-
-```text
-Top-N Min Risk + Return Filter
-```
-
-👉 Occasionally:
-
-```text
-Top-N Max Return (small capital)
+No filter = aggressive  
+With filter = smart
 ```
 
 ---
 
-# 🔥 After 2 months (what you will check)
+# 🏁 Final clarity
 
-* Did high return portfolios give expected results?
-* Did low risk portfolios protect capital?
-* Which model matches your psychology?
+```text id="4krnbb"
+Max Profit → speed  
+Min Risk → safety  
+Top-N → focus  
+Constraint → control
+```
 
 ---
 
-If you want later:
-
-👉 I can add a **performance tracker (log file)**
-so you can compare all 4 models automatically over time 📊
+This table is now **final version** — you can safely store it in your repo 👍

@@ -94,7 +94,6 @@ expected_returns = dict(zip(edf['Stock'], edf['Return']))
 ```python
 import pandas as pd
 import numpy as np
-import os
 import random
 
 class TopNPortfolio:
@@ -106,7 +105,8 @@ class TopNPortfolio:
         data_path=".",
         capital=10000,
         n_select=5,
-        max_weight=0.4
+        max_weight=0.4,
+        min_weight=0.05   # 🔥 NEW
     ):
         self.stocks = stocks
         self.expected_returns = expected_returns
@@ -114,41 +114,48 @@ class TopNPortfolio:
         self.capital = capital
         self.n_select = n_select
         self.max_weight = max_weight
+        self.min_weight = min_weight
 
-        self.mu = None
         self.results = []
 
     # 🔹 Prepare expected return vector
     def prepare_data(self):
         self.mu_map = self.expected_returns
 
+        # ✅ min weight validation
+        if self.min_weight * self.n_select > 1:
+            raise ValueError("min_weight too high for given n_select ❌")
+
     # 🔹 Generate subset + weights
     def generate_portfolio(self):
         selected = random.sample(self.stocks, self.n_select)
-    
+
         weights = np.random.random(self.n_select)
         weights /= np.sum(weights)
-    
-        # ✅ enforce max weight properly
-        for _ in range(10):  # limited iterations (stable)
+
+        # 🔹 enforce min weight
+        weights = np.maximum(weights, self.min_weight)
+        weights /= np.sum(weights)
+
+        # 🔹 enforce max weight
+        for _ in range(10):
             over = weights > self.max_weight
-    
             if not np.any(over):
                 break
-    
+
             excess = np.sum(weights[over] - self.max_weight)
             weights[over] = self.max_weight
-    
+
             under = weights < self.max_weight
-    
             if np.sum(weights[under]) == 0:
                 break
-    
+
             weights[under] += (weights[under] / np.sum(weights[under])) * excess
-    
-            weights /= np.sum(weights)  # final normalization
-    
-            return selected, weights
+
+        # 🔹 final normalization
+        weights /= np.sum(weights)
+
+        return selected, weights   # ✅ FIXED (was wrongly inside loop earlier)
 
     # 🔹 Simulation (MAX RETURN OBJECTIVE)
     def simulate(self, n_portfolios=30000):
@@ -193,6 +200,26 @@ class TopNPortfolio:
         print(f"Return: {best[0]:.2%}")
 
         return self.build_portfolio(best)
+
+
+# 🔹 Example usage
+if __name__ == "__main__":
+    edf = pd.read_excel("monte.xlsx")
+
+    stocks = edf['Stock'].tolist()
+    expected_returns = dict(zip(edf['Stock'], edf['Return']))
+
+    model = TopNPortfolio(
+        stocks,
+        expected_returns,
+        capital=10000,
+        n_select=5,
+        max_weight=0.30,
+        min_weight=0.05   # 🔥 NEW
+    )
+
+    result = model.run(30000)
+    print(result)
 ```
 
 ---

@@ -95,7 +95,7 @@ Below is the complete working code:
 # Drawdown Measurement
 # Max Weight + Min Weight
 
-
+```
 import pandas as pd
 import numpy as np
 import random
@@ -245,7 +245,7 @@ if __name__ == "__main__":
 
     result = model.run(40000)
     print(result)
-
+```
 ---
 
 ## How to Use

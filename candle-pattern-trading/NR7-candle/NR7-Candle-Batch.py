@@ -184,22 +184,45 @@ summary_df = summary_df.sort_values(
 # SAVE TO EXCEL
 # =====================================================
 
-with pd.ExcelWriter(
-    OUTPUT_FILE,
-    engine='openpyxl'
-) as writer:
+if len(all_signals) == 0:
+    print("No signals found.")
+else:
 
-    signals_df.to_excel(
-        writer,
-        sheet_name='All Signals',
-        index=True
+    signals_df = pd.concat(all_signals, ignore_index=True)
+
+    summary_df = pd.DataFrame(summary_list)
+
+    summary_df = summary_df.sort_values(
+        by='5D Win Rate',
+        ascending=False
     )
 
-    summary_df.to_excel(
-        writer,
-        sheet_name='Stock Summary',
-        index=False
-    )
+    try:
+
+        with pd.ExcelWriter(
+            OUTPUT_FILE,
+            engine='openpyxl',
+            mode='w'
+        ) as writer:
+
+            signals_df.to_excel(
+                writer,
+                sheet_name='All Signals',
+                index=False
+            )
+
+            summary_df.to_excel(
+                writer,
+                sheet_name='Stock Summary',
+                index=False
+            )
+
+        print(f"\nSaved: {OUTPUT_FILE}")
+
+    except Exception as e:
+
+        print("Excel save failed:")
+        print(e)
 
 print("\n===================================")
 print("REPORT SAVED")
